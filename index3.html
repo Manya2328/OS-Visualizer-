@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Round Robin Scheduling Visualizer</title>
+<style>
+* { box-sizing: border-box; }
+body { 
+  margin: 0; 
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+  background: #f0f9ff; 
+  color: #0f172a; 
+}
+header { 
+  background: #0f172a; 
+  color: #ffffff; 
+  padding: 30px 20px; 
+  text-align: center; 
+  border-bottom: 5px solid #10b981; 
+}
+header h1 { 
+  margin: 0 0 8px; 
+  font-size: 28px; 
+  letter-spacing: -0.5px; 
+  font-weight: 700; 
+  color: #f8fafc;
+}
+header p { 
+  margin: 0; 
+  color: #cbd5e1; 
+  font-size: 15px; 
+}
+main { 
+  max-width: 1120px; 
+  margin: 28px auto; 
+  padding: 0 16px 36px; 
+}
+.panel { 
+  background: #ffffff; 
+  padding: 24px; 
+  margin-bottom: 24px; 
+  border-radius: 16px; 
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06); 
+  border: 1px solid #bae6fd; 
+}
+.panel-title-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e0f2fe;
+  padding-bottom: 10px;
+}
+.panel-badge {
+  background: #0f172a;
+  color: #10b981;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+h2 { 
+  margin: 0; 
+  font-size: 20px; 
+  color: #0f172a; 
+  font-weight: 700; 
+}
+.small { 
+  color: #475569; 
+  font-size: 14px; 
+  margin-top: 4px;
+}
+.controls { 
+  display: flex; 
+  flex-wrap: wrap; 
+  align-items: flex-end; 
+  gap: 14px; 
+}
+label { 
+  display: block; 
+  font-size: 12px; 
+  margin-bottom: 6px; 
+  font-weight: 700; 
+  color: #0f172a; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px; 
+}
+input, select, button { 
+  font: inherit; 
+  padding: 10px 14px; 
+  border: 1.5px solid #93c5fd; 
+  border-radius: 8px; 
+  transition: all 0.2s ease; 
+}
+input:focus, select:focus { 
+  outline: none; 
+  border-color: #0284c7; 
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); 
+}
+input { 
+  width: 95px; 
+  background: #f0f9ff; 
+  font-weight: 600;
+  color: #0f172a;
+}
+button { 
+  background: #10b981; 
+  color: #0f172a; 
+  border: 0; 
+  cursor: pointer; 
+  font-weight: 700; 
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25); 
+}
+button:hover:not(:disabled) { 
+  background: #059669; 
+  color: #ffffff;
+  transform: translateY(-1px); 
+}
+button.secondary { 
+  background: #0f172a; 
+  color: #38bdf8; 
+  border: none; 
+  box-shadow: none; 
+}
+button.secondary:hover:not(:disabled) { 
+  background: #1e293b; 
+  color: #7dd3fc;
+}
+button:disabled { 
+  opacity: .45; 
+  cursor: not-allowed; 
+  transform: none; 
+}
+table { 
+  width: 100%; 
+  border-collapse: separate; 
+  border-spacing: 0; 
+  margin-top: 16px; 
+  border-radius: 12px; 
+  overflow: hidden; 
+  border: 1px solid #bae6fd; 
+}
+th, td { 
+  padding: 12px 10px; 
+  text-align: center; 
+  border-bottom: 1px solid #e0f2fe; 
+}
+tr:last-child td { border-bottom: none; }
+th { 
+  background: #0f172a; 
+  color: #38bdf8; 
+  font-weight: 600; 
+  font-size: 14px; 
+}
+td {
+  background: #ffffff;
+}
+.table-wrap { overflow-x: auto; }
+.status { 
+  background: #e0f2fe; 
+  border-left: 5px solid #0284c7; 
+  padding: 16px; 
+  border-radius: 8px; 
+  margin-top: 18px; 
+  min-height: 52px; 
+  font-size: 15px; 
+  color: #0369a1; 
+  font-weight: 600; 
+}
+.metrics { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); 
+  gap: 14px; 
+}
+.metric { 
+  background: #f0f9ff; 
+  border-radius: 12px; 
+  padding: 16px; 
+  border: 1.5px solid #bae6fd; 
+  text-align: center; 
+}
+.metric span {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.metric strong { 
+  display: block; 
+  font-size: 26px; 
+  margin-top: 6px; 
+  color: #0f172a; 
+  font-weight: 800; 
+}
+.gantt { 
+  display: flex; 
+  gap: 6px; 
+  align-items: stretch; 
+  overflow-x: auto; 
+  padding: 12px 4px 8px; 
+  min-height: 100px; 
+}
+.slot { 
+  min-width: 72px; 
+  flex: 1 0 72px; 
+  border-radius: 10px; 
+  padding: 10px 6px; 
+  color: white; 
+  text-align: center; 
+  position: relative; 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12); 
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.slot .proc { font-weight: 800; font-size: 16px; }
+.slot .time { font-size: 11px; margin-top: 8px; opacity: 0.9; font-weight: 600; }
+.slot .duration { font-size: 11px; opacity: .95; }
+.legend { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 16px; 
+  font-size: 13px; 
+  font-weight: 600; 
+  margin-bottom: 12px; 
+  color: #0f172a;
+}
+.dot { 
+  display: inline-block; 
+  width: 12px; 
+  height: 12px; 
+  border-radius: 4px; 
+  margin-right: 6px; 
+  vertical-align: middle; 
+}
+.timeline { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+  gap: 10px; 
+  margin-top: 14px;
+}
+.tick { 
+  border: 1.5px solid #bae6fd; 
+  border-radius: 10px; 
+  padding: 12px; 
+  background: #ffffff; 
+  transition: all 0.2s; 
+}
+.tick.active { 
+  border: 2px solid #10b981; 
+  background: #ecfdf5; 
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); 
+  transform: translateY(-2px);
+}
+.tick b { display: block; margin-bottom: 4px; color: #0f172a; }
+.note { font-size: 13px; color: #475569; line-height: 1.5; margin-top: 14px; }
+@media (max-width: 600px) { 
+  header h1 { font-size: 22px; } 
+  .panel { padding: 16px; } 
+  input { width: 76px; } 
+  th, td { padding: 8px 6px; font-size: 13px; } 
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Round Robin Scheduling Visualizer</h1>
+  <p>Change arrival time, burst time and quantum. Watch the CPU work one time unit at a time.</p>
+</header>
+<main>
+  <section class="panel">
+    <div class="panel-title-container">
+      <span class="panel-badge">01</span>
+      <h2>Set Process Values</h2>
+    </div>
+    <div class="controls">
+      <div><label for="quantum">Time quantum (ms)</label><input id="quantum" type="number" min="1" max="20" value="2"></div>
+      <div><label for="overhead">Switch overhead (ms)</label><input id="overhead" type="number" min="0" max="10" value="0"></div>
+      <button id="runBtn">Run simulation</button>
+      <button id="sampleBtn" class="secondary">Reset sample</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Process</th><th>Task</th><th>Arrival (ms)</th><th>Burst (ms)</th></tr></thead>
+        <tbody id="processRows"></tbody>
+      </table>
+    </div>
+    <p class="note">Edit the numbers in the table, then select <b>Run simulation</b>. Burst time must be at least 1. Overhead is added when switching from one process to another, not before the first or after the last process.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title-container">
+      <span class="panel-badge">02</span>
+      <h2>CPU Timeline (Gantt Chart)</h2>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div id="gantt" class="gantt"></div>
+    <div class="controls" style="margin-top: 14px;">
+      <button id="prevBtn" class="secondary">◀ Previous unit</button>
+      <button id="playBtn">▶ Play</button>
+      <button id="nextBtn" class="secondary">Next unit ▶</button>
+      <button id="endBtn" class="secondary">Show all</button>
+      <div><label for="timeSlider">Time unit</label><input id="timeSlider" type="range" min="0" max="0" value="0" style="width:180px"></div>
+    </div>
+    <div id="status" class="status">Run the simulation to see the CPU schedule.</div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title-container">
+      <span class="panel-badge">03</span>
+      <h2>Time Unit Details</h2>
+    </div>
+    <p class="small">Select a time unit in the timeline above. The highlighted card explains which process is running or whether the CPU is switching.</p>
+    <div id="timeDetails" class="timeline"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title-container">
+      <span class="panel-badge">04</span>
+      <h2>Results</h2>
+    </div>
+    <div class="metrics" id="metrics"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Process</th><th>Completion</th><th>Turnaround</th><th>Waiting</th><th>Response</th></tr></thead>
+        <tbody id="resultsRows"><tr><td colspan="5">Run the simulation to calculate results.</td></tr></tbody>
+      </table>
+    </div>
+    <p class="note">Turnaround = completion − arrival. Waiting = turnaround − burst. Response = first start − arrival. Context switches count changes from one process to another; idle time is not counted as a switch.</p>
+  </section>
+</main>
+<script>
+const sample = [
+  {id: "P1", task: "Water-quality monitoring", arrival: 0, burst: 5},
+  {id: "P2", task: "Waste-collection scheduling", arrival: 1, burst: 3},
+  {id: "P3", task: "Traffic-pollution analysis", arrival: 2, burst: 4},
+  {id: "P4", task: "Public energy-use monitoring", arrival: 3, burst: 2}
+];
+const colors = ["#0284c7", "#10b981", "#0f172a", "#0d9488", "#0369a1", "#059669"];
+let schedule = [], results = [], currentTime = 0, timer = null, totalTime = 0, switchCount = 0, overheadTotal = 0;
+
+function createRows(data) {
+  document.getElementById("processRows").innerHTML = data.map(p => `
+    <tr>
+      <td><b>${p.id}</b></td><td>${p.task}</td>
+      <td><input aria-label="${p.id} arrival time" type="number" min="0" value="${p.arrival}" data-id="${p.id}" data-field="arrival"></td>
+      <td><input aria-label="${p.id} burst time" type="number" min="1" value="${p.burst}" data-id="${p.id}" data-field="burst"></td>
+    </tr>`).join("");
+}
+function getProcesses() {
+  return sample.map(p => {
+    const a = document.querySelector(`[data-id="${p.id}"][data-field="arrival"]`);
+    const b = document.querySelector(`[data-id="${p.id}"][data-field="burst"]`);
+    return {...p, arrival: Number(a.value), burst: Number(b.value)};
+  });
+}
+function simulate() {
+  stopPlay();
+  const processes = getProcesses();
+  const q = Number(document.getElementById("quantum").value);
+  const overhead = Number(document.getElementById("overhead").value);
+  if (!Number.isInteger(q) || q < 1 || processes.some(p => !Number.isInteger(p.arrival) || p.arrival < 0 || !Number.isInteger(p.burst) || p.burst < 1) || !Number.isInteger(overhead) || overhead < 0) {
+    alert("Please use whole numbers. Arrival must be 0 or more, burst and quantum at least 1, and overhead 0 or more.");
+    return;
+  }
+  let remaining = {};
+  let firstStart = {}, completion = {};
+  processes.forEach(p => remaining[p.id] = p.burst);
+  let ready = [], time = 0, finished = 0, added = new Set(), lastProcess = null;
+  schedule = [];
+  switchCount = 0; overheadTotal = 0;
+  const addArrivals = () => {
+    processes.slice().sort((a,b) => a.arrival-b.arrival || a.id.localeCompare(b.id)).forEach(p => {
+      if (p.arrival <= time && !added.has(p.id) && remaining[p.id] > 0) {
+        ready.push(p.id); added.add(p.id);
+      }
+    });
+  };
+  while (finished < processes.length && time < 10000) {
+    addArrivals();
+    if (ready.length === 0) {
+      const next = processes.filter(p => remaining[p.id] > 0).map(p => p.arrival).filter(a => a > time).sort((a,b)=>a-b)[0];
+      if (next === undefined) break;
+      while (time < next) { schedule.push({start:time, end:time+1, type:"idle", id:"Idle"}); time++; }
+      lastProcess = null;
+      continue;
+    }
+    const id = ready.shift();
+    if (lastProcess !== null && lastProcess !== id && overhead > 0) {
+      switchCount++;
+      for (let i=0; i<overhead; i++) {
+        schedule.push({start:time, end:time+1, type:"switch", id:"Switch"});
+        time++; overheadTotal++;
+        addArrivals();
+      }
+    } else if (lastProcess !== null && lastProcess !== id) {
+      switchCount++;
+    }
+    const runFor = Math.min(q, remaining[id]);
+    if (firstStart[id] === undefined) firstStart[id] = time;
+    for (let i=0; i<runFor; i++) {
+      schedule.push({start:time, end:time+1, type:"process", id});
+      time++; remaining[id]--; addArrivals();
+    }
+    if (remaining[id] > 0) ready.push(id);
+    else { completion[id] = time; finished++; }
+    lastProcess = id;
+  }
+  totalTime = time;
+  results = processes.map(p => {
+    const c = completion[p.id] ?? time;
+    const turnaround = c - p.arrival;
+    return {...p, completion:c, turnaround, waiting:turnaround-p.burst, response:(firstStart[p.id] ?? p.arrival)-p.arrival};
+  });
+  renderLegend(processes);
+  currentTime = 0;
+  document.getElementById("timeSlider").max = Math.max(0, schedule.length-1);
+  document.getElementById("timeSlider").value = 0;
+  renderGantt();
+  renderDetails();
+  renderResults();
+}
+function renderLegend(processes) {
+  document.getElementById("legend").innerHTML = processes.map((p,i)=>`<span><i class="dot" style="background:${colors[i%colors.length]}"></i>${p.id}</span>`).join("") +
+    `<span><i class="dot" style="background:#64748b"></i>Context switch</span><span><i class="dot" style="background:#cbd5e1"></i>Idle</span>`;
+}
+function colorFor(item) {
+  if (item.type === "switch") return "#64748b";
+  if (item.type === "idle") return "#cbd5e1";
+  const idx = sample.findIndex(p=>p.id===item.id);
+  return colors[(idx<0?0:idx)%colors.length];
+}
+function renderGantt() {
+  const showCount = Math.min(schedule.length, currentTime+1);
+  const shown = schedule.slice(0, showCount);
+  document.getElementById("gantt").innerHTML = shown.length ? shown.map((item,i)=>`
+    <div class="slot" style="background:${colorFor(item)};${i===currentTime?'outline:3px solid #10b981;outline-offset:2px;':''}">
+      <div class="proc">${item.id}</div><div class="duration">${item.type==="process"?"Running":item.type==="switch"?"Overhead":"No process"}</div>
+      <div class="time">${item.start}–${item.end} ms</div>
+    </div>`).join("") : '<p>Run the simulation to create the Gantt chart.</p>';
+  document.getElementById("prevBtn").disabled = !schedule.length || currentTime <= 0;
+  document.getElementById("nextBtn").disabled = !schedule.length || currentTime >= schedule.length-1;
+  document.getElementById("playBtn").disabled = !schedule.length;
+}
+function renderDetails() {
+  const item = schedule[currentTime];
+  if (!item) {
+    document.getElementById("status").textContent = "Run the simulation to see what happens at each time unit.";
+    document.getElementById("timeDetails").innerHTML = "";
+    return;
+  }
+  let message = item.type === "process" ? `${item.id} uses the CPU from ${item.start} to ${item.end} ms. Its remaining burst time decreases by 1 ms.` :
+    item.type === "switch" ? `The CPU spends this 1 ms switching to another process. No process does useful work during this interval.` :
+    `The CPU is idle from ${item.start} to ${item.end} ms because no process has arrived yet.`;
+  document.getElementById("status").textContent = `Time ${item.start}–${item.end} ms: ${message}`;
+  document.getElementById("timeDetails").innerHTML = schedule.map((s,i)=>`<div class="tick ${i===currentTime?'active':''}"><b>${s.start}–${s.end} ms</b>${s.id}<div class="small">${s.type==="process"?"CPU running":s.type==="switch"?"Context switch":"CPU idle"}</div></div>`).join("");
+}
+function renderResults() {
+  document.getElementById("resultsRows").innerHTML = results.map(r=>`<tr><td><b>${r.id}</b></td><td>${r.completion}</td><td>${r.turnaround}</td><td>${r.waiting}</td><td>${r.response}</td></tr>`).join("");
+  const avgT = results.reduce((s,r)=>s+r.turnaround,0)/results.length;
+  const avgW = results.reduce((s,r)=>s+r.waiting,0)/results.length;
+  const useful = schedule.filter(s=>s.type==="process").length;
+  const efficiency = totalTime ? useful/totalTime*100 : 0;
+  document.getElementById("metrics").innerHTML = `
+    <div class="metric"><span>Average turnaround</span><strong>${avgT.toFixed(2)} ms</strong></div>
+    <div class="metric"><span>Average waiting</span><strong>${avgW.toFixed(2)} ms</strong></div>
+    <div class="metric"><span>Context switches</span><strong>${switchCount}</strong></div>
+    <div class="metric"><span>Switch overhead</span><strong>${overheadTotal} ms</strong></div>
+    <div class="metric"><span>CPU efficiency</span><strong>${efficiency.toFixed(1)}%</strong></div>`;
+}
+function moveTo(value) {
+  if (!schedule.length) return;
+  currentTime = Math.max(0, Math.min(Number(value), schedule.length-1));
+  document.getElementById("timeSlider").value = currentTime;
+  renderGantt(); renderDetails();
+}
+function stopPlay() {
+  if (timer) clearInterval(timer);
+  timer = null;
+  document.getElementById("playBtn").textContent = "▶ Play";
+}
+function togglePlay() {
+  if (timer) { stopPlay(); return; }
+  if (!schedule.length) return;
+  if (currentTime >= schedule.length-1) moveTo(0);
+  document.getElementById("playBtn").textContent = "❚❚ Pause";
+  timer = setInterval(() => {
+    if (currentTime >= schedule.length-1) { stopPlay(); return; }
+    moveTo(currentTime+1);
+  }, 700);
+}
+document.getElementById("runBtn").addEventListener("click", simulate);
+document.getElementById("sampleBtn").addEventListener("click", () => {
+  createRows(sample); document.getElementById("quantum").value=2; document.getElementById("overhead").value=0; simulate();
+});
+document.getElementById("prevBtn").addEventListener("click",()=>moveTo(currentTime-1));
+document.getElementById("nextBtn").addEventListener("click",()=>moveTo(currentTime+1));
+document.getElementById("endBtn").addEventListener("click",()=>{stopPlay(); currentTime=schedule.length-1; document.getElementById("timeSlider").value=currentTime; renderGantt(); renderDetails();});
+document.getElementById("playBtn").addEventListener("click",togglePlay);
+document.getElementById("timeSlider").addEventListener("input",e=>{stopPlay();moveTo(e.target.value);});
+createRows(sample);
+simulate();
+</script>
+</body>
+</html>
